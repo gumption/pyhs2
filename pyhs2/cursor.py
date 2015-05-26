@@ -219,13 +219,17 @@ class Cursor(object):
 
     def _fetch(self, rows, fetchReq):
         resultsRes = self.client.FetchResults(fetchReq)
-        for row in resultsRes.results.rows:
-            rowData= []
-            for i, col in enumerate(row.colVals):
-                rowData.append(get_value(col))
-            rows.append(rowData)
-        if len(resultsRes.results.rows) == 0:
+        # if no rows are returned, e.g., after a CREATE TABLE, resultRes.results will be None, generating an AttributeError
+        if not resultsRes or not resultsRes.results:
             self.hasMoreRows = False
+        else:
+            for row in resultsRes.results.rows:
+                rowData= []
+                for i, col in enumerate(row.colVals):
+                    rowData.append(get_value(col))
+                rows.append(rowData)
+            if len(resultsRes.results.rows) == 0:
+                self.hasMoreRows = False
         return rows
 
     def close(self):
